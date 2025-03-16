@@ -1,0 +1,46 @@
+{
+  "name": "rollup-plugin-literal-replacer",
+  "version": "0.0.1",
+  "description": "Rollup plugin for replacing string literals in specific function calls with customizable transformation rules. Ideal for i18n key hashing and localization workflows.",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FuXingYu-fxy/rollup-plugin-literal-replacer.git"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "keywords": [
+    "rollup",
+    "rollup-plugin",
+    "i18n",
+    "string-replacement",
+    "ast",
+    "magic-string",
+    "code-transformation"
+  ],
+  "author": "Xingyu Fu",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "crc": "^4.3.2",
+    "estree-walker": "^3.0.3",
+    "magic-string": "^0.30.17"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "rollup": "*",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "peerDependencies": {
+    "rollup": "^4.35.0"
+  }
+}
