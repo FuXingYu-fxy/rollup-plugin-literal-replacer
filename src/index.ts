@@ -38,6 +38,8 @@ export default function literalReplacer(
   // 预处理 src 路径（跨平台兼容）
   const srcPath = path.resolve('src').replace(/\\/g, '/') + '/';
 
+  const cache: Record<string, string> = {};
+
   return {
     name: 'literal-replacer',
     transform(code, id) {
@@ -70,9 +72,12 @@ export default function literalReplacer(
                   if (argNode.type === 'Literal' && typeof argNode.value === 'string') {
                     const originalValue = argNode.value;
                     if (shouldReplace(originalValue)) {
-                      const newValue = transform(originalValue);
+                      if (!cache[originalValue]) {
+                        cache[originalValue] = transform(originalValue)
+                      }
+
                       if ('start' in argNode && 'end' in argNode) {
-                        s.overwrite(argNode.start as number, argNode.end as number, `'${newValue}'`);
+                        s.overwrite(argNode.start as number, argNode.end as number, `'${cache[originalValue]}'`);
                       }
                     }
                   }
