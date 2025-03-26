@@ -1,21 +1,20 @@
-import path from 'path';
 import type { Plugin } from 'rollup';
+import { createFilter, FilterPattern } from '@rollup/pluginutils'
 import MagicString from 'magic-string';
 import { Node, walk } from 'estree-walker';
-import { crc32 } from 'crc';
 
 // 定义插件配置类型
 export interface LiteralReplacerOptions {
-  /** 需要处理的函数名（默认 ['t', '$t']） */
+  /** 打包时包含的文件 */
+  include?: FilterPattern;
+  /** 打包时排除的文件 */
+  exclude?: FilterPattern;
+  /** 检测的目标函数名 */
   functions?: string[];
-  /** 需要处理的文件扩展名（默认 ['.vue', '.js', '.ts', '.jsx', '.tsx']） */
-  extensions?: string[];
-  /** 自定义前缀检测逻辑（默认检测 'N/' 和 'B/' 开头的字符串） */
+  /** 在每个字面量参数被转换时调用, 传入的是参数名, 返回boolean决定是否继续进行转换 */
   shouldReplace?: (value: string) => boolean;
-  /** 自定义转换逻辑（默认添加 CRC32 哈希） */
+  /** 自定义转换逻辑, 默认原样返回 */
   transform?: (value: string) => string;
-  /** 错误处理回调 */
-  onError?: (error: Error, id: string) => void;
 }
 
 export default function literalReplacer(
@@ -23,30 +22,22 @@ export default function literalReplacer(
 ): Plugin {
   // 合并默认配置
   const {
+    include = "src/**/*.{js,ts,jsx,tsx,vue}",
+    exclude = "node_modules/**",
     functions = ['t', '$t'],
-    extensions = ['.vue', '.js', '.ts', '.jsx', '.tsx'],
-    shouldReplace = (value) => ['N/', 'B/'].some(prefix => value.startsWith(prefix)),
-    transform = (value) => {
-      const index = value.indexOf('/');
-      const prefix = value.slice(0, index);
-      const message = value.slice(index + 1);
-      return `${prefix}${crc32(message).toString(16)}`;
-    },
-    onError = (error, id) => console.error(`[literal-replacer] Error in ${id}: ${error.message}`)
+    shouldReplace = () => true, 
+    transform = (value) => value,
   } = options;
 
-  // 预处理 src 路径（跨平台兼容）
-  const srcPath = path.resolve('src').replace(/\\/g, '/') + '/';
-
   const cache: Record<string, string> = {};
+  const filter = createFilter(include, exclude);
 
   return {
     name: 'literal-replacer',
     transform(code, id) {
       try {
         // 过滤非目标文件
-        if (!id.startsWith(srcPath)) return null;
-        if (!extensions.includes(path.extname(id))) return null;
+        if (!filter(id)) return null;
 
         const s = new MagicString(code);
         const ast = this.parse(code);
@@ -91,8 +82,8 @@ export default function literalReplacer(
           code: s.toString(),
           map: s.generateMap({ hires: true }),
         };
-      } catch (err) {
-        onError(err as Error, id);
+      } catch (err: any) {
+        this.warn(err.message);
         return null; 
       }
     },

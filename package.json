@@ -1,6 +1,6 @@
 {
   "name": "rollup-plugin-literal-replacer",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Rollup plugin for replacing string literals in specific function calls with customizable transformation rules. Ideal for i18n key hashing and localization workflows.",
   "type": "module",
   "main": "lib/index.js",
@@ -28,12 +28,11 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "crc": "^4.3.2",
     "estree-walker": "^3.0.3",
-    "magic-string": "^0.30.17"
+    "magic-string": "^0.30.17",
+    "@rollup/pluginutils": "^5.1.4"
   },
   "devDependencies": {
-    "@types/node": "^22.13.10",
     "rollup": "*",
     "typescript": "^5.8.2"
   },

@@ -8,7 +8,7 @@
 ```js
 // 假设你有以下代码：
 foo('hello', 'world')
-// 使用插件的自定义转换逻辑
+// 使用插件的自定义替换逻辑
 function transform(val) {
   return val.slice(0, 1)
 }
@@ -18,7 +18,7 @@ foo('h', 'w')
 ## 特性
 
 - 🔍 **精准定位** - 通过 AST 分析精准定位目标函数调用
-- 🔧 **高度可配置** - 支持自定义匹配规则和转换逻辑
+- 🔧 **高度可配置** - 支持自定义匹配规则和替换逻辑
 - 🗺️ **完整的 Sourcemap** - 使用 Magic-string 生成精准源码映射
 
 ## 安装
@@ -39,7 +39,8 @@ export default {
   plugins: [
     literalReplacer({
       functions: ['t', '$t'],
-      extensions: ['.vue', '.js']
+      include: "src/**/*.js",
+      exclude: "node_modules/**"
     })
   ]
 };
@@ -48,27 +49,32 @@ export default {
 
 | 选项          | 类型                              | 默认值                                      | 说明                             |
 |---------------|-----------------------------------|---------------------------------------------|----------------------------------|
+| include       | string \| RegExp \| (string \| RegExp)[] | "src/**/*.{js,ts,jsx,tsx,vue}"              | 需要处理的文件路径模式           |
+| exclude       | string \| RegExp \| (string \| RegExp)[] | "node_modules/**"                           | 排除处理的文件路径模式           |
 | functions     | string[]                          | ['t', '$t']                                 | 需要处理的目标函数名             |
-| extensions    | string[]                          | ['.vue', '.js', '.ts', '.jsx', '.tsx']      | 需要处理的文件扩展名             |
-| shouldReplace | (value: string) => boolean        | 检测 N/ 和 B/ 前缀                          | 判断是否需要替换的过滤函数       |
-| transform     | (value: string) => string         | CRC32 哈希转换                              | 自定义字符串转换逻辑             |
-| onError       | (error: Error, id: string) => void| 控制台报错                                  | 自定义错误处理函数               |
+| shouldReplace | (value: string) => boolean        | () => true                          | 会对函数参数的每个字面量进行判断是否需要替换的过滤函数       |
+| transform     | (value: string) => string         | (value) => value                              | 自定义字符串替换逻辑             |
 
 # 示例
-## 自定义转换函数
+## 自定义替换逻辑
 ```js
 literalReplacer({
   functions: ['i18n'],
-  transform: (value) => {
-    const [prefix, key] = value.split('/');
-    return `${prefix}_${key.toUpperCase()}`;
+  transform = (value) => {
+    const index = value.indexOf('/');
+    const prefix = value.slice(0, index);
+    const message = value.slice(index + 1);
+    return `${prefix}${crc32(message).toString(16)}`;
   }
 })
 ```
-## 扩展文件类型
+## 函数参数是否被替换
 ```js
+// foo("ab", "ac", "b")
 literalReplacer({
-  extensions: ['.svelte', '.astro']
+  shouldReplace(value) {
+    return value.startsWith("a")
+  }
 })
 ```
 # 工作原理
